@@ -1,0 +1,4 @@
+updater/node_modules/
+updater/dist/
+updater/.desktop-logs/
+*.log

@@ -1,0 +1,129 @@
+name: Safe Updater
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'updater/**'
+      - '.github/workflows/safe-updater.yml'
+      - 'README.md'
+  push:
+    branches:
+      - main
+      - 'feature/**'
+    tags:
+      - 'updater-v*'
+    paths:
+      - 'updater/**'
+      - '.github/workflows/safe-updater.yml'
+      - 'README.md'
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Create an updater GitHub Release after tests pass'
+        required: true
+        default: false
+        type: boolean
+      tag:
+        description: 'Required when publish=true, for example updater-v1.2.0'
+        required: false
+        type: string
+
+concurrency:
+  group: safe-updater-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-windows:
+    name: Test and build Windows updater
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: updater
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: updater/package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Run self-test
+        run: npm run selftest
+
+      - name: Build portable updater
+        run: npm run dist
+
+      - name: Smoke-test packaged startup path
+        run: npm run smoke:packaged
+
+      - name: Create SHA-256 manifest
+        shell: pwsh
+        run: |
+          $artifact = Get-Item -LiteralPath 'dist\DeepSeek-Harness-Updater.exe'
+          $hash = (Get-FileHash -LiteralPath $artifact.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $($artifact.Name)" | Set-Content -LiteralPath 'dist\UPDATER-SHA256SUMS' -Encoding utf8
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deepseek-harness-safe-updater-windows-x64
+          path: |
+            updater/dist/DeepSeek-Harness-Updater.exe
+            updater/dist/UPDATER-SHA256SUMS
+          if-no-files-found: error
+
+  release:
+    name: Publish updater release
+    needs: build-windows
+    if: startsWith(github.ref, 'refs/tags/updater-v') || inputs.publish == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Resolve and validate tag
+        id: release
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            case "$INPUT_TAG" in
+              updater-v*) tag="$INPUT_TAG" ;;
+              *) echo "tag must start with updater-v"; exit 1 ;;
+            esac
+          else
+            tag="$REF_NAME"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Download tested artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: deepseek-harness-safe-updater-windows-x64
+          path: release-assets
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          gh release create "$RELEASE_TAG" release-assets/* \
+            --repo "${{ github.repository }}" \
+            --target "${{ github.sha }}" \
+            --title "$RELEASE_TAG" \
+            --generate-notes
