@@ -1,6 +1,6 @@
 {
   "name": "deepseek-harness-safe-updater",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "private": true,
   "description": "DeepSeek Harness Windows desktop launcher with exact RC updates and automatic rollback",
   "author": "lechichao",
@@ -20,24 +20,27 @@
     "electron-builder": "26.15.3"
   },
   "build": {
-    "appId": "com.deepseek.harness.safe-updater",
+    "appId": "com.deepseek.harness",
     "productName": "DeepSeek-Harness",
     "directories": {
-      "output": "dist"
+      "output": "dist",
+      "buildResources": "build"
     },
     "files": [
       "main.js",
       "lib/**/*",
+      "assets/**/*",
       "package.json"
     ],
     "asar": true,
     "npmRebuild": false,
     "compression": "normal",
     "win": {
-      "target": "portable"
+      "target": "portable",
+      "icon": "build/icon.ico"
     },
     "portable": {
-      "artifactName": "DeepSeek-Harness-Updater.exe"
+      "artifactName": "DeepSeek-Harness.exe"
     }
   }
 }

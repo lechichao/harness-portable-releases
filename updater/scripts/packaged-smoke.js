@@ -5,7 +5,7 @@ const os = require('os');
 const path = require('path');
 const { spawn } = require('child_process');
 
-const executable = path.resolve(__dirname, '..', 'dist', 'DeepSeek-Harness-Updater.exe');
+const executable = path.resolve(__dirname, '..', 'dist', 'DeepSeek-Harness.exe');
 if (!fs.existsSync(executable)) throw new Error(`missing packaged updater: ${executable}`);
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'dsh-packaged-smoke-'));

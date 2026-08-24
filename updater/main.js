@@ -1,6 +1,6 @@
 'use strict';
 
-const { app, BrowserWindow, Menu, Tray, dialog, nativeImage } = require('electron');
+const { app, BrowserWindow, Menu, Tray, dialog } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const backend = require('./lib/backend');
@@ -59,7 +59,7 @@ else {
 }
 
 async function run() {
-  app.setAppUserModelId('com.deepseek.harness.safe-updater');
+  app.setAppUserModelId('com.deepseek.harness');
   log('==== 启动 ====', `packaged=${app.isPackaged}`, `root=${ROOT}`);
   if (!fs.existsSync(backend.binPath(ROOT))) throw new Error(`找不到后端入口：${backend.binPath(ROOT)}`);
   await app.whenReady();
@@ -77,6 +77,7 @@ function createWindow() {
     minWidth: 900,
     minHeight: 600,
     title: 'DeepSeek Harness',
+    icon: path.join(__dirname, 'assets', 'icon-256.png'),
     show: false,
     backgroundColor: '#0d1117',
     autoHideMenuBar: true,
@@ -94,8 +95,7 @@ function createWindow() {
 
 function createTray() {
   try {
-    const icon = nativeImage.createFromDataURL('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=');
-    tray = new Tray(icon);
+    tray = new Tray(path.join(__dirname, 'assets', 'tray.png'));
     tray.setToolTip('DeepSeek Harness');
     tray.on('click', showWindow);
     refreshTray();

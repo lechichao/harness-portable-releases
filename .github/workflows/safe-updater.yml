@@ -72,7 +72,7 @@ jobs:
       - name: Create SHA-256 manifest
         shell: pwsh
         run: |
-          $artifact = Get-Item -LiteralPath 'dist\DeepSeek-Harness-Updater.exe'
+          $artifact = Get-Item -LiteralPath 'dist\DeepSeek-Harness.exe'
           $hash = (Get-FileHash -LiteralPath $artifact.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
           "$hash  $($artifact.Name)" | Set-Content -LiteralPath 'dist\UPDATER-SHA256SUMS' -Encoding utf8
 
@@ -81,7 +81,7 @@ jobs:
         with:
           name: deepseek-harness-safe-updater-windows-x64
           path: |
-            updater/dist/DeepSeek-Harness-Updater.exe
+            updater/dist/DeepSeek-Harness.exe
             updater/dist/UPDATER-SHA256SUMS
           if-no-files-found: error
 
