@@ -1,6 +1,6 @@
 {
   "name": "deepseek-harness-safe-updater",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "description": "DeepSeek Harness Windows desktop launcher with exact RC updates and automatic rollback",
   "author": "lechichao",

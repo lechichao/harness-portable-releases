@@ -12,7 +12,7 @@ async function fetchJson(url, timeoutMs = 10000) {
     const response = await fetch(url, {
       signal: controller.signal,
       headers: {
-        accept: 'application/vnd.npm.install-v1+json, application/json',
+        accept: 'application/json',
         'user-agent': 'deepseek-harness-safe-updater/1',
       },
     });
@@ -28,8 +28,7 @@ function rcVersions(packument) {
   return Object.keys(packument.versions)
     .filter((version) => {
       const pre = semver.prerelease(version);
-      const published = packument.time && typeof packument.time[version] === 'string';
-      return published && pre && pre[0] === 'rc' && Number.isInteger(pre[1]);
+      return pre && pre[0] === 'rc' && Number.isInteger(pre[1]);
     })
     .sort(semver.rcompare);
 }
@@ -49,7 +48,7 @@ function selectLatestRc(packument) {
     integrity: manifest.dist.integrity || null,
     shasum: manifest.dist.shasum || null,
     tarball: manifest.dist.tarball,
-    publishedAt: packument.time[version],
+    publishedAt: packument.time?.[version] || null,
     source: OFFICIAL_PACKUMENT,
   };
 }

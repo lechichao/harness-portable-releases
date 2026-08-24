@@ -12,7 +12,7 @@ function manifest(version, integrity = `sha512-${version}`) {
   };
 }
 
-test('selectLatestRc chooses the highest published RC and ignores dist-tags', () => {
+test('selectLatestRc chooses the highest RC without requiring optional time metadata', () => {
   const packument = {
     name: registry.PACKAGE_NAME,
     'dist-tags': { latest: '0.1.0-rc.1' },
@@ -21,7 +21,6 @@ test('selectLatestRc chooses the highest published RC and ignores dist-tags', ()
       '0.1.1-rc.2': manifest('0.1.1-rc.2'),
       '0.2.0-rc.1': manifest('0.2.0-rc.1'),
       '1.0.0': manifest('1.0.0'),
-      '9.0.0-rc.9': manifest('9.0.0-rc.9'),
     },
     time: {
       '0.1.0-rc.1': '2026-01-01T00:00:00Z',
@@ -31,6 +30,16 @@ test('selectLatestRc chooses the highest published RC and ignores dist-tags', ()
     },
   };
   assert.equal(registry.selectLatestRc(packument).version, '0.2.0-rc.1');
+});
+
+test('selectLatestRc works with the abbreviated packument returned by npm', () => {
+  const packument = {
+    name: registry.PACKAGE_NAME,
+    versions: { '0.1.1-rc.2': manifest('0.1.1-rc.2') },
+  };
+  const selected = registry.selectLatestRc(packument);
+  assert.equal(selected.version, '0.1.1-rc.2');
+  assert.equal(selected.publishedAt, null);
 });
 
 test('selectLatestRc requires an official integrity digest and tarball', () => {
